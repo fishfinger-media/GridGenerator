@@ -734,6 +734,81 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
     
+    // Button increment/decrement functionality
+    const inputButtons = document.querySelectorAll('.input-btn');
+    let holdInterval = null;
+    let holdTimeout = null;
+    
+    function adjustInput(button) {
+        const inputId = button.dataset.input;
+        const step = parseInt(button.dataset.step);
+        const input = document.getElementById(inputId);
+        
+        if (!input) return;
+        
+        const currentValue = parseInt(input.value) || 0;
+        const min = input.min ? parseInt(input.min) : null;
+        const newValue = currentValue + step;
+        
+        // Respect min value if set
+        if (min !== null && newValue < min) {
+            input.value = min;
+        } else {
+            input.value = newValue;
+        }
+        
+        // Trigger change event
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    
+    function startHold(button) {
+        // First adjustment after a short delay
+        holdTimeout = setTimeout(() => {
+            adjustInput(button);
+            // Then repeat rapidly
+            holdInterval = setInterval(() => {
+                adjustInput(button);
+            }, 50); // Adjust every 50ms for rapid increase
+        }, 300); // Initial delay of 300ms
+    }
+    
+    function stopHold() {
+        if (holdTimeout) {
+            clearTimeout(holdTimeout);
+            holdTimeout = null;
+        }
+        if (holdInterval) {
+            clearInterval(holdInterval);
+            holdInterval = null;
+        }
+    }
+    
+    inputButtons.forEach(button => {
+        // Click handler for single click
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            adjustInput(button);
+        });
+        
+        // Mouse events for hold
+        button.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            startHold(button);
+        });
+        
+        button.addEventListener('mouseup', stopHold);
+        button.addEventListener('mouseleave', stopHold);
+        
+        // Touch events for mobile
+        button.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            startHold(button);
+        });
+        
+        button.addEventListener('touchend', stopHold);
+        button.addEventListener('touchcancel', stopHold);
+    });
+    
     // Event listeners
     widthInput.addEventListener("change", updateVisualProperties);
     heightInput.addEventListener("change", updateVisualProperties);
