@@ -23,43 +23,93 @@ document.addEventListener("DOMContentLoaded", () => {
     if (strokeCheckbox) strokeCheckbox.checked = false;
     if (safeAreaCheckbox) safeAreaCheckbox.checked = false;
     
-    // Expand all dropdowns by default
+    // Function to set dropdown height
+    function setDropdownHeight(menuWrapper, expanded, skipAnimation = false) {
+        if (expanded) {
+            const content = menuWrapper.querySelector('.dropdown-menu_c');
+            if (!content) return;
+            
+            if (skipAnimation) {
+                // For initial load, set directly without animation
+                menuWrapper.style.transition = 'none';
+                menuWrapper.style.maxHeight = 'none';
+                const height = content.scrollHeight + 16; // Add margin-top
+                menuWrapper.style.maxHeight = `${height}px`;
+                menuWrapper.classList.add('expanded');
+                requestAnimationFrame(() => {
+                    menuWrapper.style.transition = '';
+                });
+            } else {
+                // For user clicks, animate smoothly
+                // First, ensure we're starting from collapsed state
+                menuWrapper.style.maxHeight = '0';
+                menuWrapper.classList.remove('expanded');
+                
+                // Force reflow
+                void menuWrapper.offsetHeight;
+                
+                // Now measure the target height
+                menuWrapper.style.maxHeight = 'none';
+                const height = content.scrollHeight + 16; // Add margin-top
+                
+                // Set back to 0, then animate to target in next frame
+                menuWrapper.style.maxHeight = '0';
+                requestAnimationFrame(() => {
+                    menuWrapper.style.maxHeight = `${height}px`;
+                    menuWrapper.classList.add('expanded');
+                });
+            }
+        } else {
+            menuWrapper.style.maxHeight = '0';
+            menuWrapper.classList.remove('expanded');
+        }
+    }
+    
+    // Initialize dropdowns
     const dropdowns = document.querySelectorAll('.menu-dropdown');
+    const listContainer = document.getElementById('list');
+    
+    // Initialize dropdowns
     dropdowns.forEach(dropdown => {
         const header = dropdown.querySelector('.h-flex');
         const menuWrapper = dropdown.querySelector('.dropdown-menu_w');
         
-        // Set dropdowns to expanded state on load
-        if (menuWrapper) {
-            menuWrapper.classList.add('active');
-            const arrow = header?.querySelector('svg');
+        if (!header || !menuWrapper) return;
+        
+        // Make header clickable
+        header.style.cursor = 'pointer';
+        
+        // Check if this dropdown is within #list (should be expanded by default)
+        const isInList = listContainer && listContainer.contains(dropdown);
+        
+        // Set initial state
+        if (isInList) {
+            // Expand dropdowns in #list by default (skip animation on initial load)
+            setDropdownHeight(menuWrapper, true, true);
+            const arrow = header.querySelector('svg');
             if (arrow) {
                 arrow.style.transform = 'rotate(180deg)';
             }
+        } else {
+            // Collapse other dropdowns by default
+            setDropdownHeight(menuWrapper, false);
+            const arrow = header.querySelector('svg');
+            if (arrow) {
+                arrow.style.transform = 'rotate(0deg)';
+            }
         }
         
-        if (header) {
-            header.addEventListener('click', () => {
-                if (menuWrapper) {
-                    const isOpen = menuWrapper.classList.contains('active');
-                    if (isOpen) {
-                        menuWrapper.classList.remove('active');
-                    } else {
-                        // Close other dropdowns
-                        document.querySelectorAll('.dropdown-menu_w').forEach(menu => {
-                            menu.classList.remove('active');
-                        });
-                        menuWrapper.classList.add('active');
-                    }
-                    
-                    // Rotate arrow
-                    const arrow = header.querySelector('svg');
-                    if (arrow) {
-                        arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
-                    }
-                }
-            });
-        }
+        // Add click handler
+        header.addEventListener('click', () => {
+            const isExpanded = menuWrapper.classList.contains('expanded');
+            setDropdownHeight(menuWrapper, !isExpanded);
+            
+            // Rotate arrow
+            const arrow = header.querySelector('svg');
+            if (arrow) {
+                arrow.style.transform = !isExpanded ? 'rotate(180deg)' : 'rotate(0deg)';
+            }
+        });
     });
     
     // Function to calculate border radius based on shortest side

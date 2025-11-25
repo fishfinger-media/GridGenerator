@@ -86,17 +86,26 @@ h1 {
     line-height: 1;
 }
 
-.dropdown-menu_c {
-    overflow: hidden;   
+.menu-dropdown .h-flex {
+    cursor: pointer;
+}
+
+.menu-dropdown .h-flex svg {
+    transition: transform 0.3s ease-in-out;
+}
+
+.dropdown-menu{
+    overflow: hidden;  
 }
 
 .dropdown-menu_w {
-    margin-top: 1rem;
-    display: block;
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.3s ease-in-out;
 }
 
-.dropdown-menu_w.active {
-    display: block;
+.dropdown-menu_c {
+    margin-top: 1rem;
 }
 
 .v-flex {
@@ -111,7 +120,11 @@ h1 {
 
 .h-flex-stretch {
     flex: 1;
+    opacity: 0;
+    transition: all 0.2s ease-in-out;
 }
+
+/* Removed - using .expanded class instead */
 
 .flex-center {
     align-items: center;
