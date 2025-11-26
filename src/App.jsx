@@ -18,6 +18,7 @@ function App() {
   const [selectionStart, setSelectionStart] = useState(null);
   const [hoveredCell, setHoveredCell] = useState(null);
   const [svgCopied, setSvgCopied] = useState(false);
+  const [mergedSvgCopied, setMergedSvgCopied] = useState(false);
   const [viewportSize, setViewportSize] = useState({ width: window.innerWidth, height: window.innerHeight });
   
   // Dropdown states - open by default
@@ -265,7 +266,8 @@ function App() {
   };
 
   // Generate SVG from grid
-  const generateSVG = () => {
+  const generateSVG = (overrideOnlyCreatedCells = null) => {
+    const useOnlyCreatedCells = overrideOnlyCreatedCells !== null ? overrideOnlyCreatedCells : onlyCreatedCells;
     // Use the width and height for SVG dimensions
     const svgWidth = width;
     const svgHeight = height;
@@ -298,7 +300,7 @@ function App() {
     
     // First, add all empty cells as solid purple rectangles (only if onlyCreatedCells is false)
     const borderAttr = showBorder ? 'stroke="#0b0f14" stroke-width="1"' : '';
-    if (!onlyCreatedCells) {
+    if (!useOnlyCreatedCells) {
       for (let r = 1; r <= rows; r++) {
         for (let c = 1; c <= cols; c++) {
           const cellKey = `${r}-${c}`;
@@ -349,7 +351,7 @@ function App() {
       });
       
       // For empty cells, draw safe area for each (only if onlyCreatedCells is false)
-      if (!onlyCreatedCells) {
+      if (!useOnlyCreatedCells) {
         for (let r = 1; r <= rows; r++) {
           for (let c = 1; c <= cols; c++) {
             const cellKey = `${r}-${c}`;
@@ -395,6 +397,18 @@ ${svgContent}
       setTimeout(() => setSvgCopied(false), 2000);
     } catch (err) {
       console.error('Failed to copy SVG:', err);
+    }
+  };
+
+  // Copy merged grid SVG to clipboard (only created cells)
+  const handleCopyMergedSVG = async () => {
+    try {
+      const svg = generateSVG(true);
+      await navigator.clipboard.writeText(svg);
+      setMergedSvgCopied(true);
+      setTimeout(() => setMergedSvgCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy merged SVG:', err);
     }
   };
 
@@ -603,7 +617,7 @@ ${svgContent}
                   <path fillRule="evenodd" clipRule="evenodd" d="M5.781 6.8415L11.562 1.062L10.5015 0L5.781 4.7205L1.062 0L0 1.062L5.781 6.8415Z" fill="#0B0F14"/>
                 </svg>
               </div>
-              <div className="dropdown-menu_w" style={{ maxHeight: sizeOpen ? '200px' : '0' }}>
+              <div className="dropdown-menu_w" style={{ maxHeight: sizeOpen ? '1000px' : '0' }}>
                 <div className="dropdown-menu_c">
                   <div className="v-flex gap-05">
                     <div className="h-flex flex-stretch">
@@ -687,7 +701,7 @@ ${svgContent}
                   <path fillRule="evenodd" clipRule="evenodd" d="M5.781 6.8415L11.562 1.062L10.5015 0L5.781 4.7205L1.062 0L0 1.062L5.781 6.8415Z" fill="#0B0F14"/>
                 </svg>
               </div>
-              <div className="dropdown-menu_w" style={{ maxHeight: layoutOpen ? '200px' : '0' }}>
+              <div className="dropdown-menu_w" style={{ maxHeight: layoutOpen ? '1000px' : '0' }}>
                 <div className="dropdown-menu_c">
                   <div className="v-flex gap-05">
                     <div className="h-flex flex-stretch">
@@ -773,7 +787,7 @@ ${svgContent}
                   <path fillRule="evenodd" clipRule="evenodd" d="M5.781 6.8415L11.562 1.062L10.5015 0L5.781 4.7205L1.062 0L0 1.062L5.781 6.8415Z" fill="#0B0F14"/>
                 </svg>
               </div>
-              <div className="dropdown-menu_w" style={{ maxHeight: settingsOpen ? '200px' : '0' }}>
+              <div className="dropdown-menu_w" style={{ maxHeight: settingsOpen ? '1000px' : '0' }}>
                 <div className="dropdown-menu_c">
                   <div className="v-flex gap-05">
                     <label>
@@ -802,15 +816,6 @@ ${svgContent}
                         onChange={(e) => setShowSafeArea(e.target.checked)}
                       />
                       Safe Area
-                    </label>
-                    <label>
-                      <input 
-                        type="checkbox" 
-                        name="option-only-created"
-                        checked={onlyCreatedCells}
-                        onChange={(e) => setOnlyCreatedCells(e.target.checked)}
-                      />
-                      Only Created Cells
                     </label>
                   </div>
                 </div>
@@ -886,6 +891,13 @@ ${svgContent}
 
           <button className="button is-primary" id="btn-copy" onClick={handleCopySVG}>
             <span className="button-text">{svgCopied ? 'Copied!' : 'Copy Grid'}</span>
+            <svg width="10" height="12" viewBox="0 0 10 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M7.36842 0H1.05263C0.473684 0 0 0.490909 0 1.09091V8.72727H1.05263V1.09091H7.36842V0ZM8.94737 2.18182H3.15789C2.57895 2.18182 2.10526 2.67273 2.10526 3.27273V10.9091C2.10526 11.5091 2.57895 12 3.15789 12H8.94737C9.52632 12 10 11.5091 10 10.9091V3.27273C10 2.67273 9.52632 2.18182 8.94737 2.18182ZM8.94737 10.9091H3.15789V3.27273H8.94737V10.9091Z" fill="black"/>
+            </svg>
+          </button>
+
+          <button className="button is-primary" id="btn-copy-merged" onClick={handleCopyMergedSVG}>
+            <span className="button-text">{mergedSvgCopied ? 'Copied!' : 'Copy Merged Grid'}</span>
             <svg width="10" height="12" viewBox="0 0 10 12" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M7.36842 0H1.05263C0.473684 0 0 0.490909 0 1.09091V8.72727H1.05263V1.09091H7.36842V0ZM8.94737 2.18182H3.15789C2.57895 2.18182 2.10526 2.67273 2.10526 3.27273V10.9091C2.10526 11.5091 2.57895 12 3.15789 12H8.94737C9.52632 12 10 11.5091 10 10.9091V3.27273C10 2.67273 9.52632 2.18182 8.94737 2.18182ZM8.94737 10.9091H3.15789V3.27273H8.94737V10.9091Z" fill="black"/>
             </svg>

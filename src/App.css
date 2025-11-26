@@ -14,6 +14,20 @@
   --colors--lime: #d1ff00;
   --colors--lime-dark: #9fcc00;
   --colors--lime-darker: #7aa300;
+
+  /* Fluid responsive */
+
+  --font-from: 18;
+  --font-to: 20;
+  --vw-from: calc(1920 / 100);
+  --vw-to: calc(2400 / 100);
+  --coefficient: calc((var(--font-to) - var(--font-from)) / (var(--vw-to) - var(--vw-from)));
+  --base: calc((var(--font-from) - var(--vw-from) * var(--coefficient)) / 16);
+  
+}
+
+html { 
+  font-size: calc(var(--base) * 1rem + var(--coefficient) * 1vw);
 }
 
 @font-face {
@@ -176,6 +190,7 @@ h1 {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  white-space: nowrap;
 }
 
 .is-primary {
@@ -598,4 +613,33 @@ h3 {
 
 .templates-grid::-webkit-scrollbar-thumb:hover {
   background: var(--colors--06);
+}
+
+
+
+@media screen and (max-width: 1920px) {
+  :root {
+    --font-from: 16;
+    --font-to: 18;
+    --vw-from: calc(1440 / 100);
+    --vw-to: calc(1920 / 100);
+    }
+}
+
+@media screen and (max-width: 1440px) {
+  :root {
+    --font-from: 14;
+    --font-to: 16;
+    --vw-from: calc(479 / 100);
+    --vw-to: calc(1440 / 100);
+    }
+}
+
+@media screen and (max-width: 479px) {
+  :root {
+    --font-from: 12;
+    --font-to: 16;
+    --vw-from: calc(1 / 100);
+    --vw-to: calc(479 / 100);
+    }
 }
