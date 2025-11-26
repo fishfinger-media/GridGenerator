@@ -1022,7 +1022,7 @@ ${svgContent}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="templates-header">
-                <h2>Templates</h2>
+                <p className="template-tilte">Filled Grid Layouts</p>
                 <button
                   className="templates-close"
                   onClick={() => setTemplateOpen(false)}

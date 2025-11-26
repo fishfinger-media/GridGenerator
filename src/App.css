@@ -533,7 +533,7 @@ h3 {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0.5rem;
+
   display: flex;
   align-items: center;
   justify-content: center;
@@ -611,6 +611,14 @@ h3 {
   background: var(--colors--06);
 }
 
+.template-tilte {
+  color: var(--colors--01);
+  margin: 0;
+  font-family: 'AeonikMonoPro', sans-serif;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  line-height: 1;
+}
 
 
 @media screen and (max-width: 1920px) {
