@@ -1,0 +1,74 @@
+:root {
+  --colors--01: #0b0f14;
+  --colors--02: #1c202d;
+  --colors--03: #2a3343;
+  --colors--04: #344758;
+  --colors--05: #425e70;
+  --colors--06: #708997;
+  --colors--07: #9fb9c2;
+  --colors--08: #bad3d9;
+  --colors--09: #cde0e6;
+  --colors--10: #d9ebed;
+  --colors--11: #eef6f8;
+  --colors--12: #fafeff;
+  --colors--lime: #d1ff00;
+  --colors--lime-dark: #9fcc00;
+  --colors--lime-darker: #7aa300;
+}
+
+@font-face {
+  font-family: 'Zagma';
+  src: url('./assets/Zagma.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'AeonikMonoPro';
+  src: url('./assets/AeonikMonoPro.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Zagma', sans-serif;
+  background-color: var(--colors--04);
+  color: var(--colors--12);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'AeonikMonoPro', sans-serif;
+  line-height: 1;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  outline: none;
+  font-family: inherit;
+}
+
+input {
+  font-family: inherit;
+  outline: none;
+}
+
+#root {
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
