@@ -4,8 +4,8 @@ import './App.css';
 import { templates } from './templates';
 
 function App() {
-  const [rows, setRows] = useState(4);
-  const [cols, setCols] = useState(5);
+  const [rows, setRows] = useState(12);
+  const [cols, setCols] = useState(12);
   const [width, setWidth] = useState(1920);
   const [height, setHeight] = useState(1080);
   const [items, setItems] = useState([]);
@@ -81,8 +81,8 @@ function App() {
     
     if (shortestSide < 250) return 1;
     if (shortestSide >= 250 && shortestSide < 500) return 1;
-    if (shortestSide >= 500 && shortestSide < 750) return 2;
-    return 6; // >= 750px
+    if (shortestSide >= 500 && shortestSide < 750) return 1;
+    return 2; // >= 750px
   };
 
   // Update viewport size on window resize
@@ -545,7 +545,7 @@ ${svgContent}
           gridRowEnd: endRow,
           zIndex: 5,
           pointerEvents: 'none',
-          borderStyle: 'dashed',
+          borderStyle: 'solid',
           borderWidth: '1px',
           borderRadius: `${borderRadius}px`,
         }}
@@ -870,7 +870,12 @@ ${svgContent}
                   className="remove-btn"
                   onClick={(e) => handleRemoveItem(e, item.id)}
                 >
-                  ✕
+                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="10" height="10" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15.4141 1.41406L9.12109 7.70703L15.4141 14L14 15.4141L7.70703 9.12109L1.41406 15.4141L0 14L6.29297 7.70703L0 1.41406L1.41406 0L7.70703 6.29297L14 0L15.4141 1.41406Z" fill="white"/>
+                  </svg>
+                  </span>
+
                 </div>
                 <div
                   className="resize-handle"

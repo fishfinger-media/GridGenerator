@@ -240,8 +240,9 @@ h1 {
   background: none;
   border: none;
   outline: none;
-  min-height: 1.5rem;
-  aspect-ratio: 1 / 1;
+  min-height: 1.8rem;
+  min-width: 1.8rem;
+  background-color: none;
   height: 100%;
 
   cursor: pointer;
