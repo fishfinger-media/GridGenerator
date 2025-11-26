@@ -38,6 +38,8 @@ function App() {
   const gridRef = useRef(null);
   const rapidIncrementTimeoutRef = useRef(null);
   const rapidIncrementIntervalRef = useRef(null);
+  const createAnimationFrameRef = useRef(null);
+  const currentHoveredCellRef = useRef(null);
 
   // Dev function to log current grid in template format
   const logCurrentGrid = () => {
@@ -271,47 +273,77 @@ function App() {
 
   // Drag-to-create logic
   useEffect(() => {
+    if (!isCreatingCell) {
+      // Cancel any pending animation frame
+      if (createAnimationFrameRef.current) {
+        cancelAnimationFrame(createAnimationFrameRef.current);
+        createAnimationFrameRef.current = null;
+      }
+      return;
+    }
+
     const handleMouseMove = (e) => {
-      if (!isCreatingCell || !gridRef.current || !createStartCell) return;
+      if (!gridRef.current || !createStartCell) return;
 
-      const gridRect = gridRef.current.getBoundingClientRect();
-      const relativeX = e.clientX - gridRect.left;
-      const relativeY = e.clientY - gridRect.top;
+      // Cancel previous animation frame if pending
+      if (createAnimationFrameRef.current) {
+        cancelAnimationFrame(createAnimationFrameRef.current);
+      }
 
-      const totalWidth = gridRect.width;
-      const totalHeight = gridRect.height;
+      // Use requestAnimationFrame for smooth updates
+      createAnimationFrameRef.current = requestAnimationFrame(() => {
+        const gridRect = gridRef.current.getBoundingClientRect();
+        const relativeX = e.clientX - gridRect.left;
+        const relativeY = e.clientY - gridRect.top;
 
-      const cellWidth = (totalWidth - (cols - 1) * gap) / cols;
-      const cellHeight = (totalHeight - (rows - 1) * gap) / rows;
+        const totalWidth = gridRect.width;
+        const totalHeight = gridRect.height;
 
-      // Calculate which cell the mouse is over
-      let currentCol = Math.floor(relativeX / (cellWidth + gap)) + 1;
-      let currentRow = Math.floor(relativeY / (cellHeight + gap)) + 1;
+        const cellWidth = (totalWidth - (cols - 1) * gap) / cols;
+        const cellHeight = (totalHeight - (rows - 1) * gap) / rows;
 
-      // Clamp to grid bounds
-      if (currentCol < 1) currentCol = 1;
-      if (currentRow < 1) currentRow = 1;
-      if (currentCol > cols) currentCol = cols;
-      if (currentRow > rows) currentRow = rows;
+        // Calculate which cell the mouse is over
+        let currentCol = Math.floor(relativeX / (cellWidth + gap)) + 1;
+        let currentRow = Math.floor(relativeY / (cellHeight + gap)) + 1;
 
-      // Update hovered cell for preview
-      setHoveredCell({ r: currentRow, c: currentCol });
+        // Clamp to grid bounds
+        if (currentCol < 1) currentCol = 1;
+        if (currentRow < 1) currentRow = 1;
+        if (currentCol > cols) currentCol = cols;
+        if (currentRow > rows) currentRow = rows;
+
+        // Only update state if cell changed (prevents unnecessary re-renders)
+        const newCell = { r: currentRow, c: currentCol };
+        const currentCell = currentHoveredCellRef.current;
+        if (!currentCell || currentCell.r !== newCell.r || currentCell.c !== newCell.c) {
+          currentHoveredCellRef.current = newCell;
+          setHoveredCell(newCell);
+        }
+      });
     };
 
     const handleMouseUp = () => {
-      if (!isCreatingCell || !createStartCell || !hoveredCell) {
+      // Cancel any pending animation frame
+      if (createAnimationFrameRef.current) {
+        cancelAnimationFrame(createAnimationFrameRef.current);
+        createAnimationFrameRef.current = null;
+      }
+
+      const finalCell = currentHoveredCellRef.current || hoveredCell;
+      if (!createStartCell || !finalCell) {
         setIsCreatingCell(false);
         setCreateStartCell(null);
         setSelectionStart(null);
         setHoveredCell(null);
+        currentHoveredCellRef.current = null;
         return;
       }
 
       // Complete selection
-      const startRow = Math.min(createStartCell.r, hoveredCell.r);
-      const endRow = Math.max(createStartCell.r, hoveredCell.r) + 1;
-      const startCol = Math.min(createStartCell.c, hoveredCell.c);
-      const endCol = Math.max(createStartCell.c, hoveredCell.c) + 1;
+      const startRow = Math.min(createStartCell.r, finalCell.r);
+      const endRow = Math.max(createStartCell.r, finalCell.r) + 1;
+      const startCol = Math.min(createStartCell.c, finalCell.c);
+      const endCol = Math.max(createStartCell.c, finalCell.c) + 1;
 
       const newItem = {
         id: Date.now(),
@@ -321,27 +353,43 @@ function App() {
         rowEnd: endRow,
       };
 
-      if (!checkCollision(newItem)) {
-        setItems([...items, newItem]);
-      }
+      // Check collision using current items state
+      setItems(prevItems => {
+        const hasCollision = prevItems.some(item => {
+          return !(
+            newItem.colEnd <= item.colStart ||
+            newItem.colStart >= item.colEnd ||
+            newItem.rowEnd <= item.rowStart ||
+            newItem.rowStart >= item.rowEnd
+          );
+        });
+
+        if (!hasCollision) {
+          return [...prevItems, newItem];
+        }
+        return prevItems;
+      });
 
       // Reset creation state
       setIsCreatingCell(false);
       setCreateStartCell(null);
       setSelectionStart(null);
       setHoveredCell(null);
+      currentHoveredCellRef.current = null;
     };
 
-    if (isCreatingCell) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-    }
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    window.addEventListener('mouseup', handleMouseUp);
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      if (createAnimationFrameRef.current) {
+        cancelAnimationFrame(createAnimationFrameRef.current);
+        createAnimationFrameRef.current = null;
+      }
     };
-  }, [isCreatingCell, createStartCell, hoveredCell, cols, rows, gap, items, checkCollision]);
+  }, [isCreatingCell, createStartCell, hoveredCell, cols, rows, gap]);
 
   // Drag logic
   useEffect(() => {
