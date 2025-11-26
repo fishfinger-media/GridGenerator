@@ -75,9 +75,9 @@ function App() {
   const calculateBorderRadius = (gridHeight, gridWidth) => {
     const shortestSide = Math.min(gridHeight, gridWidth);
     
-    if (shortestSide < 250) return 8;
-    if (shortestSide >= 250 && shortestSide < 500) return 16;
-    if (shortestSide >= 500 && shortestSide < 750) return 20;
+    if (shortestSide < 250) return 6;
+    if (shortestSide >= 250 && shortestSide < 500) return 10;
+    if (shortestSide >= 500 && shortestSide < 750) return 16;
     return 20; // >= 750px
   };
 
