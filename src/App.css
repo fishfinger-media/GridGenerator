@@ -352,7 +352,7 @@ label {
   justify-content: center;
   align-items: center;
   transition: background-color 0.2s;
-  cursor: pointer;
+  cursor: crosshair;
   background-color: #2a3343;
 }
 

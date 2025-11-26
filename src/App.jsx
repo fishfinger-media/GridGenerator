@@ -174,8 +174,18 @@ function App() {
 
   // Handle cell mouse down to start drag-to-create
   const handleCellMouseDown = (e, r, c) => {
-    // Don't start creation if clicking on an existing item
-    if (e.target.closest('.grid-item')) {
+    // Don't start creation if clicking on an existing item or its controls
+    if (e.target.closest('.grid-item') || e.target.closest('.remove-btn') || e.target.closest('.resize-handle')) {
+      return;
+    }
+    
+    // Check if the starting cell is already part of an existing item
+    const isOccupied = items.some(item => 
+      r >= item.rowStart && r < item.rowEnd && 
+      c >= item.colStart && c < item.colEnd
+    );
+    
+    if (isOccupied) {
       return;
     }
     
