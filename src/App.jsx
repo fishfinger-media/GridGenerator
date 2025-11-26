@@ -23,6 +23,8 @@ function App() {
   const [recentlyDraggedId, setRecentlyDraggedId] = useState(null);
   const [selectionStart, setSelectionStart] = useState(null);
   const [hoveredCell, setHoveredCell] = useState(null);
+  const [isCreatingCell, setIsCreatingCell] = useState(false);
+  const [createStartCell, setCreateStartCell] = useState(null);
   const [svgCopied, setSvgCopied] = useState(false);
   const [mergedSvgCopied, setMergedSvgCopied] = useState(false);
   const [viewportSize, setViewportSize] = useState({ width: window.innerWidth, height: window.innerHeight });
@@ -170,40 +172,24 @@ function App() {
     return items.find(item => item.rowStart === r && item.colStart === c);
   };
 
-  // Handle cell click for 2-step creation
-  const handleCellClick = (r, c) => {
-    if (!selectionStart) {
-      // Start selection
-      setSelectionStart({ r, c });
-    } else {
-      // Complete selection
-      const startRow = Math.min(selectionStart.r, r);
-      const endRow = Math.max(selectionStart.r, r) + 1;
-      const startCol = Math.min(selectionStart.c, c);
-      const endCol = Math.max(selectionStart.c, c) + 1;
-
-      const newItem = {
-        id: Date.now(),
-        colStart: startCol,
-        colEnd: endCol,
-        rowStart: startRow,
-        rowEnd: endRow,
-      };
-
-      if (!checkCollision(newItem)) {
-        setItems([...items, newItem]);
-        setSelectionStart(null);
-      } else {
-        // Collision detected - reset selection or just do nothing
-        // We'll just reset selection to let them try again
-        setSelectionStart(null);
-      }
+  // Handle cell mouse down to start drag-to-create
+  const handleCellMouseDown = (e, r, c) => {
+    // Don't start creation if clicking on an existing item
+    if (e.target.closest('.grid-item')) {
+      return;
     }
+    
+    e.preventDefault();
+    setIsCreatingCell(true);
+    setCreateStartCell({ r, c });
+    setSelectionStart({ r, c });
   };
 
-  // Track hover for preview
+  // Track hover for preview (only when not creating)
   const handleCellMouseEnter = (r, c) => {
-    setHoveredCell({ r, c });
+    if (!isCreatingCell) {
+      setHoveredCell({ r, c });
+    }
   };
 
   // Remove item
@@ -272,6 +258,80 @@ function App() {
     e.preventDefault();
     setResizingId(id);
   };
+
+  // Drag-to-create logic
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isCreatingCell || !gridRef.current || !createStartCell) return;
+
+      const gridRect = gridRef.current.getBoundingClientRect();
+      const relativeX = e.clientX - gridRect.left;
+      const relativeY = e.clientY - gridRect.top;
+
+      const totalWidth = gridRect.width;
+      const totalHeight = gridRect.height;
+
+      const cellWidth = (totalWidth - (cols - 1) * gap) / cols;
+      const cellHeight = (totalHeight - (rows - 1) * gap) / rows;
+
+      // Calculate which cell the mouse is over
+      let currentCol = Math.floor(relativeX / (cellWidth + gap)) + 1;
+      let currentRow = Math.floor(relativeY / (cellHeight + gap)) + 1;
+
+      // Clamp to grid bounds
+      if (currentCol < 1) currentCol = 1;
+      if (currentRow < 1) currentRow = 1;
+      if (currentCol > cols) currentCol = cols;
+      if (currentRow > rows) currentRow = rows;
+
+      // Update hovered cell for preview
+      setHoveredCell({ r: currentRow, c: currentCol });
+    };
+
+    const handleMouseUp = () => {
+      if (!isCreatingCell || !createStartCell || !hoveredCell) {
+        setIsCreatingCell(false);
+        setCreateStartCell(null);
+        setSelectionStart(null);
+        setHoveredCell(null);
+        return;
+      }
+
+      // Complete selection
+      const startRow = Math.min(createStartCell.r, hoveredCell.r);
+      const endRow = Math.max(createStartCell.r, hoveredCell.r) + 1;
+      const startCol = Math.min(createStartCell.c, hoveredCell.c);
+      const endCol = Math.max(createStartCell.c, hoveredCell.c) + 1;
+
+      const newItem = {
+        id: Date.now(),
+        colStart: startCol,
+        colEnd: endCol,
+        rowStart: startRow,
+        rowEnd: endRow,
+      };
+
+      if (!checkCollision(newItem)) {
+        setItems([...items, newItem]);
+      }
+
+      // Reset creation state
+      setIsCreatingCell(false);
+      setCreateStartCell(null);
+      setSelectionStart(null);
+      setHoveredCell(null);
+    };
+
+    if (isCreatingCell) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isCreatingCell, createStartCell, hoveredCell, cols, rows, gap, items, checkCollision]);
 
   // Drag logic
   useEffect(() => {
@@ -609,7 +669,7 @@ ${svgContent}
             gridArea: `${r} / ${c} / ${r + 1} / ${c + 1}`,
             borderRadius: `${borderRadius}px`
           }}
-          onClick={() => handleCellClick(r, c)}
+          onMouseDown={(e) => handleCellMouseDown(e, r, c)}
           onMouseEnter={() => handleCellMouseEnter(r, c)}
         />
       );
@@ -692,9 +752,9 @@ ${svgContent}
     return overlays;
   };
 
-  // Calculate preview item style
+  // Calculate preview item style (show during drag-to-create)
   let previewItem = null;
-  if (selectionStart && hoveredCell) {
+  if (isCreatingCell && selectionStart && hoveredCell) {
     const startRow = Math.min(selectionStart.r, hoveredCell.r);
     const endRow = Math.max(selectionStart.r, hoveredCell.r) + 1;
     const startCol = Math.min(selectionStart.c, hoveredCell.c);
@@ -1091,7 +1151,11 @@ ${svgContent}
             maxHeight: '100%',
             position: 'relative',
           }}
-          onMouseLeave={() => setHoveredCell(null)}
+          onMouseLeave={() => {
+            if (!isCreatingCell) {
+              setHoveredCell(null);
+            }
+          }}
         >
           {placeholders}
 
