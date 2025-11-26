@@ -551,7 +551,7 @@ h3 {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 1.5rem;
-  overflow-y: auto;
+  max-height: 80vh;
   padding-right: 0.5rem;
   flex: 1;
 }
@@ -560,25 +560,19 @@ h3 {
   cursor: pointer;
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
   border-radius: 0.5rem;
-  overflow: hidden;
-  background-color: var(--colors--12);
-  border: 2px solid transparent;
 }
 
 .template-item:hover {
-  transform: translateY(-4px);
+
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-  border-color: var(--colors--lime);
 }
 
 .template-preview {
   width: 100%;
-  aspect-ratio: 16 / 9;
-  background-color: var(--colors--02);
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+
 }
 
 .template-preview img {
