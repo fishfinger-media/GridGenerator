@@ -649,3 +649,7 @@ h3 {
     --vw-to: calc(479 / 100);
     }
 }
+
+#template {
+  pointer-events: auto;
+}

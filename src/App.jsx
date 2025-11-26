@@ -624,7 +624,7 @@ ${svgContent}
     <div className="app-container">
       <div className="navigation float">
         <div className="navigation-w">
-          <div className="v-flex gap-2">
+          <div className="v-flex gap-2"  style={{pointerEvents: 'none'}}>
             <div className="h-flex flex-center gap-2">
               <div className="logo-w">
                 <svg className="logo-w" height="100%" width="auto" viewBox="0 0 80 32" fill="none" xmlns="http://www.w3.org/2000/svg">
