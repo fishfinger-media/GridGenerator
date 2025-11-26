@@ -390,11 +390,21 @@ label {
   backdrop-filter: blur(4px);
   min-width: 0;
   min-height: 0;
+  cursor: grab;
   /* Note: Framer Motion handles the layout transition, so we don't need CSS transition for width/height/grid-area */
 }
 
-.grid-item:hover:not(.dragging):not(.drag-preview) {
+.grid-item:hover:not(.dragging):not(.drag-preview):not(.invalid) {
   background-color: var(--colors--lime-dark);
+}
+
+.grid-item.dragging {
+  cursor: grabbing !important;
+}
+
+.grid-item.invalid {
+  border-color: #ff4444 !important;
+  background-color: rgba(255, 68, 68, 0.2) !important;
 }
 
 .grid-item.selected:not(.dragging):not(.drag-preview) {

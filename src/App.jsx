@@ -16,6 +16,11 @@ function App() {
   const [onlyCreatedCells, setOnlyCreatedCells] = useState(false);
 
   const [resizingId, setResizingId] = useState(null);
+  const [draggingId, setDraggingId] = useState(null);
+  const [dragOffset, setDragOffset] = useState({ row: 0, col: 0 });
+  const [dragPreview, setDragPreview] = useState(null);
+  const [dragOriginalPosition, setDragOriginalPosition] = useState(null);
+  const [recentlyDraggedId, setRecentlyDraggedId] = useState(null);
   const [selectionStart, setSelectionStart] = useState(null);
   const [hoveredCell, setHoveredCell] = useState(null);
   const [svgCopied, setSvgCopied] = useState(false);
@@ -266,6 +271,181 @@ function App() {
     e.stopPropagation();
     e.preventDefault();
     setResizingId(id);
+  };
+
+  // Drag logic
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!draggingId || !gridRef.current) return;
+
+      const gridRect = gridRef.current.getBoundingClientRect();
+      const relativeX = e.clientX - gridRect.left;
+      const relativeY = e.clientY - gridRect.top;
+
+      const totalWidth = gridRect.width;
+      const totalHeight = gridRect.height;
+
+      const cellWidth = (totalWidth - (cols - 1) * gap) / cols;
+      const cellHeight = (totalHeight - (rows - 1) * gap) / rows;
+
+      // Calculate which cell the mouse is over
+      let newColStart = Math.floor(relativeX / (cellWidth + gap)) + 1;
+      let newRowStart = Math.floor(relativeY / (cellHeight + gap)) + 1;
+
+      // Clamp to grid bounds
+      if (newColStart < 1) newColStart = 1;
+      if (newRowStart < 1) newRowStart = 1;
+      if (newColStart > cols) newColStart = cols;
+      if (newRowStart > rows) newRowStart = rows;
+
+      // Get the item being dragged
+      const draggedItem = items.find(item => item.id === draggingId);
+      if (!draggedItem) return;
+
+      // Calculate the new position based on drag offset
+      const itemWidth = draggedItem.colEnd - draggedItem.colStart;
+      const itemHeight = draggedItem.rowEnd - draggedItem.rowStart;
+
+      // Adjust for the offset (where in the item the user clicked)
+      let adjustedColStart = newColStart - dragOffset.col;
+      let adjustedRowStart = newRowStart - dragOffset.row;
+
+      // Clamp adjusted position to keep item within grid
+      if (adjustedColStart < 1) adjustedColStart = 1;
+      if (adjustedRowStart < 1) adjustedRowStart = 1;
+      if (adjustedColStart + itemWidth > cols + 1) adjustedColStart = cols + 1 - itemWidth;
+      if (adjustedRowStart + itemHeight > rows + 1) adjustedRowStart = rows + 1 - itemHeight;
+
+      const newItem = {
+        ...draggedItem,
+        colStart: adjustedColStart,
+        colEnd: adjustedColStart + itemWidth,
+        rowStart: adjustedRowStart,
+        rowEnd: adjustedRowStart + itemHeight
+      };
+
+      // Check collision excluding itself
+      const hasCollision = checkCollision(newItem, [draggedItem.id]);
+      
+      // Store preview for visual feedback
+      setDragPreview({ ...newItem, hasCollision });
+      
+      // Always update position for visual feedback, even if overlapping
+      setItems(prevItems => prevItems.map(item => {
+        if (item.id === draggingId) {
+          return newItem;
+        }
+        return item;
+      }));
+    };
+
+    const handleMouseUp = () => {
+      if (!draggingId || !dragOriginalPosition) {
+        setDraggingId(null);
+        setDragOffset({ row: 0, col: 0 });
+        setDragPreview(null);
+        setDragOriginalPosition(null);
+        return;
+      }
+      
+      const currentDraggingId = draggingId;
+      const currentDragOriginalPosition = dragOriginalPosition;
+      
+      // Check current state for collision and revert if needed
+      setItems(prevItems => {
+        const draggedItem = prevItems.find(item => item.id === currentDraggingId);
+        if (!draggedItem) return prevItems;
+        
+        // Check if current position has collision
+        const hasCollision = checkCollision(draggedItem, [draggedItem.id]);
+        
+        // If overlapping, revert to original position
+        if (hasCollision) {
+          return prevItems.map(item => {
+            if (item.id === currentDraggingId) {
+              return {
+                ...item,
+                colStart: currentDragOriginalPosition.colStart,
+                colEnd: currentDragOriginalPosition.colEnd,
+                rowStart: currentDragOriginalPosition.rowStart,
+                rowEnd: currentDragOriginalPosition.rowEnd
+              };
+            }
+            return item;
+          });
+        }
+        
+        // Mark as recently dragged to trigger bounce animation (only if no collision)
+        setRecentlyDraggedId(currentDraggingId);
+        // Clear the recently dragged flag after animation completes
+        setTimeout(() => setRecentlyDraggedId(null), 600);
+        
+        return prevItems;
+      });
+      
+      setDraggingId(null);
+      setDragOffset({ row: 0, col: 0 });
+      setDragPreview(null);
+      setDragOriginalPosition(null);
+    };
+
+    if (draggingId) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [draggingId, cols, rows, gap, items, dragOffset, dragOriginalPosition, checkCollision]);
+
+  const handleDragStart = (e, id) => {
+    // Don't start drag if clicking on remove button or resize handle
+    if (e.target.closest('.remove-btn') || e.target.closest('.resize-handle')) {
+      return;
+    }
+
+    e.stopPropagation();
+    e.preventDefault();
+    
+    const draggedItem = items.find(item => item.id === id);
+    if (!draggedItem) return;
+
+    // Store original position for potential revert
+    setDragOriginalPosition({
+      colStart: draggedItem.colStart,
+      colEnd: draggedItem.colEnd,
+      rowStart: draggedItem.rowStart,
+      rowEnd: draggedItem.rowEnd
+    });
+
+    // Calculate which cell the mouse is over relative to the grid
+    if (!gridRef.current) return;
+    const gridRect = gridRef.current.getBoundingClientRect();
+    const relativeX = e.clientX - gridRect.left;
+    const relativeY = e.clientY - gridRect.top;
+
+    const totalWidth = gridRect.width;
+    const totalHeight = gridRect.height;
+
+    const cellWidth = (totalWidth - (cols - 1) * gap) / cols;
+    const cellHeight = (totalHeight - (rows - 1) * gap) / rows;
+
+    // Calculate which cell the mouse is over
+    const mouseCol = Math.floor(relativeX / (cellWidth + gap)) + 1;
+    const mouseRow = Math.floor(relativeY / (cellHeight + gap)) + 1;
+
+    // Calculate offset within the item (which cell in the item was clicked)
+    const offsetCol = mouseCol - draggedItem.colStart;
+    const offsetRow = mouseRow - draggedItem.rowStart;
+
+    // Clamp offset to item bounds
+    const clampedOffsetCol = Math.max(0, Math.min(offsetCol, draggedItem.colEnd - draggedItem.colStart - 1));
+    const clampedOffsetRow = Math.max(0, Math.min(offsetRow, draggedItem.rowEnd - draggedItem.rowStart - 1));
+
+    setDragOffset({ col: clampedOffsetCol, row: clampedOffsetRow });
+    setDraggingId(id);
   };
 
   // Generate SVG from grid
@@ -917,25 +1097,43 @@ ${svgContent}
 
           <AnimatePresence>
             {previewItem}
-            {items.map((item) => (
+            {items.map((item) => {
+              // Use preview position if dragging, otherwise use actual position
+              const displayItem = draggingId === item.id && dragPreview ? dragPreview : item;
+              const isOverlappingDuringDrag = draggingId === item.id && dragPreview && dragPreview.hasCollision;
+              
+              // Use bouncy spring transition if recently dragged, otherwise use normal transition (same as resize)
+              const isRecentlyDragged = recentlyDraggedId === item.id;
+              const isActivelyDragging = draggingId === item.id;
+              const springTransition = isRecentlyDragged 
+                ? { type: "spring", stiffness: 400, damping: 20, mass: 0.8 }
+                : { type: "spring", stiffness: 700, damping: 35 };
+              
+              return (
               <motion.div
                 layout
                 key={item.id}
-                className="grid-item"
+                className={`grid-item ${draggingId === item.id ? 'dragging' : ''} ${isOverlappingDuringDrag ? 'invalid' : ''}`}
                 initial={false}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ type: "spring", stiffness: 700, damping: 35 }}
-                style={{
-                  gridColumnStart: item.colStart,
-                  gridColumnEnd: item.colEnd,
-                  gridRowStart: item.rowStart,
-                  gridRowEnd: item.rowEnd,
-                  zIndex: resizingId === item.id ? 20 : 10,
-                  borderRadius: `${borderRadius}px`,
-                  border: showBorder ? '1px solid #0b0f14' : 'none',
-                  
+                animate={{ 
+                  opacity: 1, 
+                  scale: 1,
+                  borderColor: isOverlappingDuringDrag ? '#ff4444' : (showBorder ? '#0b0f14' : 'transparent'),
+                  backgroundColor: isOverlappingDuringDrag ? 'rgba(255, 68, 68, 0.2)' : 'var(--colors--lime)'
                 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={springTransition}
+                style={{
+                  gridColumnStart: displayItem.colStart,
+                  gridColumnEnd: displayItem.colEnd,
+                  gridRowStart: displayItem.rowStart,
+                  gridRowEnd: displayItem.rowEnd,
+                  zIndex: (resizingId === item.id || draggingId === item.id) ? 20 : 10,
+                  borderRadius: `${borderRadius}px`,
+                  border: showBorder || isOverlappingDuringDrag ? '1px solid' : 'none',
+                  cursor: draggingId === item.id ? 'grabbing' : 'grab',
+                }}
+                onMouseDown={(e) => handleDragStart(e, item.id)}
               >
                 <div
                   className="remove-btn"
@@ -953,7 +1151,8 @@ ${svgContent}
                   onMouseDown={(e) => handleResizeStart(e, item.id)}
                 />
               </motion.div>
-            ))}
+              );
+            })}
           </AnimatePresence>
           {showSafeArea && generateSafeAreaOverlays()}
         </div>
