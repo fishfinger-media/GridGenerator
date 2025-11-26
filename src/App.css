@@ -202,7 +202,7 @@ h1 {
   color: var(--colors--12);
   font-size: 0.75rem;
   opacity: 0.8;
-  display: none;
+  /* display: none; */
 }
 
 
@@ -504,6 +504,7 @@ h3 {
   width: 100%;
   max-width: 1400px;
   max-height: 90vh;
+  overflow: auto;
   background-color: var(--colors--11);
   border-radius: 1rem;
   padding: 2rem;
@@ -511,6 +512,7 @@ h3 {
   flex-direction: column;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
+
 
 .templates-header {
   display: flex;

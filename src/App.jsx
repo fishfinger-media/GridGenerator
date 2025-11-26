@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './App.css';
 import { templates } from './templates';
+import { freeSpaceTemplates } from './freeSpaceTemplates';
 
 function App() {
   const [rows, setRows] = useState(12);
@@ -1050,6 +1051,30 @@ ${svgContent}
                   </div>
                 ))}
               </div>
+              <div className="templates-header" style={{ marginTop: '3rem' }}>
+                <p className="template-tilte">Free Space Layouts</p>
+            
+              </div>
+              <div className="templates-grid">
+                {freeSpaceTemplates.map((template) => (
+                  <div
+                    key={template.id}
+                    className="template-item"
+                    onClick={() => applyTemplate(template)}
+                  >
+                    <div className="template-preview">
+                      <img 
+                        src={template.imageSrc} 
+                        alt={template.name || `Template ${template.id}`}
+                        loading="lazy"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+
+
             </motion.div>
           </motion.div>
         )}
