@@ -166,13 +166,12 @@ h1 {
   position: absolute;
   bottom: 2rem;
   right: 2rem;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  display: flex;
   gap: 1rem;
   padding: 1rem;
   z-index: 100;
   pointer-events: auto;
-  max-width: 500px;
+  
 }
 
 .button {

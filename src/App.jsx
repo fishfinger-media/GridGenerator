@@ -585,7 +585,7 @@ ${svgContent}
             </div>
             <div className="menu-dropdown_w" id="template">
               <div className={`menu-dropdown ${templateOpen ? 'expanded' : ''}`}>
-                <div className="h-flex flex-stretch" onClick={() => setTemplateOpen(!templateOpen)}>
+                <div className="h-flex flex-stretch gap-1" onClick={() => setTemplateOpen(!templateOpen)}>
                   <h3>Templates</h3>
                   <svg 
                     width="12" 
@@ -604,7 +604,7 @@ ${svgContent}
 
           <div className="menu-dropdown_w" id="list">
             <div className={`menu-dropdown ${sizeOpen ? 'expanded' : ''}`}>
-              <div className="h-flex flex-stretch" onClick={() => setSizeOpen(!sizeOpen)}>
+              <div className="h-flex flex-stretch gap-1" onClick={() => setSizeOpen(!sizeOpen)}>
                 <h3>Size</h3>
                 <svg 
                   width="12" 
@@ -612,7 +612,7 @@ ${svgContent}
                   viewBox="0 0 12 7" 
                   fill="none" 
                   xmlns="http://www.w3.org/2000/svg"
-                  style={{ transform: sizeOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                  style={{ transform: sizeOpen ? 'rotate(180deg)' : 'rotate(0deg)', marginTop: '-0.25em' }}
                 >
                   <path fillRule="evenodd" clipRule="evenodd" d="M5.781 6.8415L11.562 1.062L10.5015 0L5.781 4.7205L1.062 0L0 1.062L5.781 6.8415Z" fill="#0B0F14"/>
                 </svg>
@@ -620,7 +620,7 @@ ${svgContent}
               <div className="dropdown-menu_w" style={{ maxHeight: sizeOpen ? '1000px' : '0' }}>
                 <div className="dropdown-menu_c">
                   <div className="v-flex gap-05">
-                    <div className="h-flex flex-stretch">
+                    <div className="h-flex flex-stretch gap-1">
                       <label htmlFor="size-width">Width</label>
                       <div className="input-number_w">
                         <button 
@@ -651,7 +651,7 @@ ${svgContent}
                         </button>
                       </div>
                     </div>
-                    <div className="h-flex flex-stretch">
+                    <div className="h-flex flex-stretch gap-1">
                       <label htmlFor="size-height">Height</label>
                       <div className="input-number_w">
                         <button 
@@ -688,7 +688,7 @@ ${svgContent}
             </div>
 
             <div className={`menu-dropdown ${layoutOpen ? 'expanded' : ''}`}>
-              <div className="h-flex flex-stretch" onClick={() => setLayoutOpen(!layoutOpen)}>
+              <div className="h-flex flex-stretch gap-1" onClick={() => setLayoutOpen(!layoutOpen)}>
                 <h3>Layout</h3>
                 <svg 
                   width="12" 
@@ -696,7 +696,7 @@ ${svgContent}
                   viewBox="0 0 12 7" 
                   fill="none" 
                   xmlns="http://www.w3.org/2000/svg"
-                  style={{ transform: layoutOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                  style={{ transform: layoutOpen ? 'rotate(180deg)' : 'rotate(0deg)', marginTop: '-0.25em' }}
                 >
                   <path fillRule="evenodd" clipRule="evenodd" d="M5.781 6.8415L11.562 1.062L10.5015 0L5.781 4.7205L1.062 0L0 1.062L5.781 6.8415Z" fill="#0B0F14"/>
                 </svg>
@@ -704,7 +704,7 @@ ${svgContent}
               <div className="dropdown-menu_w" style={{ maxHeight: layoutOpen ? '1000px' : '0' }}>
                 <div className="dropdown-menu_c">
                   <div className="v-flex gap-05">
-                    <div className="h-flex flex-stretch">
+                    <div className="h-flex flex-stretch gap-1">
                       <label htmlFor="layout-rows">Rows</label>
                       <div className="input-number_w">
                         <button 
@@ -736,7 +736,7 @@ ${svgContent}
                         </button>
                       </div>
                     </div>
-                    <div className="h-flex flex-stretch">
+                    <div className="h-flex flex-stretch gap-1">
                       <label htmlFor="layout-columns">Columns</label>
                       <div className="input-number_w">
                         <button 
@@ -774,7 +774,7 @@ ${svgContent}
             </div>
 
             <div className={`menu-dropdown ${settingsOpen ? 'expanded' : ''}`}>
-              <div className="h-flex flex-stretch" onClick={() => setSettingsOpen(!settingsOpen)}>
+              <div className="h-flex flex-stretch gap-1" onClick={() => setSettingsOpen(!settingsOpen)}>
                 <h3>Settings</h3>
                 <svg 
                   width="12" 
@@ -782,7 +782,7 @@ ${svgContent}
                   viewBox="0 0 12 7" 
                   fill="none" 
                   xmlns="http://www.w3.org/2000/svg"
-                  style={{ transform: settingsOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                  style={{ transform: settingsOpen ? 'rotate(180deg)' : 'rotate(0deg)', marginTop: '-0.25em' }}
                 >
                   <path fillRule="evenodd" clipRule="evenodd" d="M5.781 6.8415L11.562 1.062L10.5015 0L5.781 4.7205L1.062 0L0 1.062L5.781 6.8415Z" fill="#0B0F14"/>
                 </svg>
@@ -863,6 +863,7 @@ ${svgContent}
                   zIndex: resizingId === item.id ? 20 : 10,
                   borderRadius: `${borderRadius}px`,
                   border: showBorder ? '1px solid #0b0f14' : 'none',
+                  
                 }}
               >
                 <div
@@ -890,17 +891,21 @@ ${svgContent}
           </button>
 
           <button className="button is-primary" id="btn-copy" onClick={handleCopySVG}>
-            <span className="button-text">{svgCopied ? 'Copied!' : 'Copy Grid'}</span>
-            <svg width="10" height="12" viewBox="0 0 10 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M7.36842 0H1.05263C0.473684 0 0 0.490909 0 1.09091V8.72727H1.05263V1.09091H7.36842V0ZM8.94737 2.18182H3.15789C2.57895 2.18182 2.10526 2.67273 2.10526 3.27273V10.9091C2.10526 11.5091 2.57895 12 3.15789 12H8.94737C9.52632 12 10 11.5091 10 10.9091V3.27273C10 2.67273 9.52632 2.18182 8.94737 2.18182ZM8.94737 10.9091H3.15789V3.27273H8.94737V10.9091Z" fill="black"/>
-            </svg>
+            <span className="button-text">{svgCopied ? 'Copied!' : 'Copy Full Grid'}</span>
+            <svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M1.35984 0C0.602714 0 4.92761e-05 0.633828 0 1.39028V9.56792H1.6208V1.6495H8.21305V0H1.35984Z" fill="black"/>
+<path d="M12 4.69131C11.9999 3.93486 11.3973 3.30103 10.6402 3.30103H4.59735C3.84023 3.30103 3.23756 3.93486 3.23751 4.69131V12.6097C3.23766 13.3661 3.8403 14 4.59735 14H10.6402C11.3972 14 11.9999 13.3661 12 12.6097V4.69131ZM10.3792 12.3505H4.85831V4.95053H10.3792V12.3505Z" fill="black"/>
+</svg>
+
           </button>
 
           <button className="button is-primary" id="btn-copy-merged" onClick={handleCopyMergedSVG}>
-            <span className="button-text">{mergedSvgCopied ? 'Copied!' : 'Copy Merged Grid'}</span>
-            <svg width="10" height="12" viewBox="0 0 10 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M7.36842 0H1.05263C0.473684 0 0 0.490909 0 1.09091V8.72727H1.05263V1.09091H7.36842V0ZM8.94737 2.18182H3.15789C2.57895 2.18182 2.10526 2.67273 2.10526 3.27273V10.9091C2.10526 11.5091 2.57895 12 3.15789 12H8.94737C9.52632 12 10 11.5091 10 10.9091V3.27273C10 2.67273 9.52632 2.18182 8.94737 2.18182ZM8.94737 10.9091H3.15789V3.27273H8.94737V10.9091Z" fill="black"/>
-            </svg>
+            <span className="button-text">{mergedSvgCopied ? 'Copied!' : 'Copy Grid'}</span>
+            <svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M1.35984 0C0.602714 0 4.92761e-05 0.633828 0 1.39028V9.56792H1.6208V1.6495H8.21305V0H1.35984Z" fill="black"/>
+<path d="M12 4.69131C11.9999 3.93486 11.3973 3.30103 10.6402 3.30103H4.59735C3.84023 3.30103 3.23756 3.93486 3.23751 4.69131V12.6097C3.23766 13.3661 3.8403 14 4.59735 14H10.6402C11.3972 14 11.9999 13.3661 12 12.6097V4.69131ZM10.3792 12.3505H4.85831V4.95053H10.3792V12.3505Z" fill="black"/>
+</svg>
+
           </button>
 
           <button 
