@@ -28,6 +28,8 @@ function App() {
   const [templateOpen, setTemplateOpen] = useState(false);
 
   const gridRef = useRef(null);
+  const rapidIncrementTimeoutRef = useRef(null);
+  const rapidIncrementIntervalRef = useRef(null);
 
   // Dev function to log current grid in template format
   const logCurrentGrid = () => {
@@ -565,6 +567,58 @@ ${svgContent}
     setter(Math.max(1, currentValue + step));
   };
 
+  // Handle rapid increment/decrement on button hold
+  const handleRapidStepStart = (setter, step) => {
+    // Execute immediately on mouseDown (handles single click)
+    setter(prev => Math.max(1, prev + step));
+    
+    // Clear any existing timers
+    if (rapidIncrementTimeoutRef.current) {
+      clearTimeout(rapidIncrementTimeoutRef.current);
+    }
+    if (rapidIncrementIntervalRef.current) {
+      clearInterval(rapidIncrementIntervalRef.current);
+    }
+    
+    // After 0.5s, start rapid increment every 0.25s
+    rapidIncrementTimeoutRef.current = setTimeout(() => {
+      rapidIncrementIntervalRef.current = setInterval(() => {
+        setter(prev => Math.max(1, prev + step));
+      }, 250);
+    }, 500);
+  };
+
+  const handleRapidStepStop = () => {
+    if (rapidIncrementTimeoutRef.current) {
+      clearTimeout(rapidIncrementTimeoutRef.current);
+      rapidIncrementTimeoutRef.current = null;
+    }
+    if (rapidIncrementIntervalRef.current) {
+      clearInterval(rapidIncrementIntervalRef.current);
+      rapidIncrementIntervalRef.current = null;
+    }
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      handleRapidStepStop();
+    };
+  }, []);
+
+  // Handle window mouseup to stop rapid increment if mouse leaves button
+  useEffect(() => {
+    const handleWindowMouseUp = () => {
+      handleRapidStepStop();
+    };
+    
+    window.addEventListener('mouseup', handleWindowMouseUp);
+    
+    return () => {
+      window.removeEventListener('mouseup', handleWindowMouseUp);
+    };
+  }, []);
+
   return (
     <div className="app-container">
       <div className="navigation float">
@@ -626,7 +680,9 @@ ${svgContent}
                         <button 
                           type="button" 
                           className="input-btn input-btn-minus" 
-                          onClick={() => handleNumberStep(setWidth, width, -10)}
+                          onMouseDown={() => handleRapidStepStart(setWidth, -10)}
+                          onMouseUp={handleRapidStepStop}
+                          onMouseLeave={handleRapidStepStop}
                         >
                           <svg width="8" height="1" viewBox="0 0 8 1" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M8 1H0V0H8V1Z" fill="#CDE0E6"/>
@@ -643,7 +699,9 @@ ${svgContent}
                         <button 
                           type="button" 
                           className="input-btn input-btn-plus" 
-                          onClick={() => handleNumberStep(setWidth, width, 10)}
+                          onMouseDown={() => handleRapidStepStart(setWidth, 10)}
+                          onMouseUp={handleRapidStepStop}
+                          onMouseLeave={handleRapidStepStop}
                         >
                           <svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M8 4.57143H4.57143V8H3.42857V4.57143H0V3.42857H3.42857V0H4.57143V3.42857H8V4.57143Z" fill="#CDE0E6"/>
@@ -657,7 +715,9 @@ ${svgContent}
                         <button 
                           type="button" 
                           className="input-btn input-btn-minus" 
-                          onClick={() => handleNumberStep(setHeight, height, -10)}
+                          onMouseDown={() => handleRapidStepStart(setHeight, -10)}
+                          onMouseUp={handleRapidStepStop}
+                          onMouseLeave={handleRapidStepStop}
                         >
                           <svg width="8" height="1" viewBox="0 0 8 1" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M8 1H0V0H8V1Z" fill="#CDE0E6"/>
@@ -674,7 +734,9 @@ ${svgContent}
                         <button 
                           type="button" 
                           className="input-btn input-btn-plus" 
-                          onClick={() => handleNumberStep(setHeight, height, 10)}
+                          onMouseDown={() => handleRapidStepStart(setHeight, 10)}
+                          onMouseUp={handleRapidStepStop}
+                          onMouseLeave={handleRapidStepStop}
                         >
                           <svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M8 4.57143H4.57143V8H3.42857V4.57143H0V3.42857H3.42857V0H4.57143V3.42857H8V4.57143Z" fill="#CDE0E6"/>
@@ -710,7 +772,9 @@ ${svgContent}
                         <button 
                           type="button" 
                           className="input-btn input-btn-minus" 
-                          onClick={() => handleNumberStep(setRows, rows, -1)}
+                          onMouseDown={() => handleRapidStepStart(setRows, -1)}
+                          onMouseUp={handleRapidStepStop}
+                          onMouseLeave={handleRapidStepStop}
                         >
                           <svg width="8" height="1" viewBox="0 0 8 1" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M8 1H0V0H8V1Z" fill="#CDE0E6"/>
@@ -728,7 +792,9 @@ ${svgContent}
                         <button 
                           type="button" 
                           className="input-btn input-btn-plus" 
-                          onClick={() => handleNumberStep(setRows, rows, 1)}
+                          onMouseDown={() => handleRapidStepStart(setRows, 1)}
+                          onMouseUp={handleRapidStepStop}
+                          onMouseLeave={handleRapidStepStop}
                         >
                           <svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M8 4.57143H4.57143V8H3.42857V4.57143H0V3.42857H3.42857V0H4.57143V3.42857H8V4.57143Z" fill="#CDE0E6"/>
@@ -742,7 +808,9 @@ ${svgContent}
                         <button 
                           type="button" 
                           className="input-btn input-btn-minus" 
-                          onClick={() => handleNumberStep(setCols, cols, -1)}
+                          onMouseDown={() => handleRapidStepStart(setCols, -1)}
+                          onMouseUp={handleRapidStepStop}
+                          onMouseLeave={handleRapidStepStop}
                         >
                           <svg width="8" height="1" viewBox="0 0 8 1" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M8 1H0V0H8V1Z" fill="#CDE0E6"/>
@@ -760,7 +828,9 @@ ${svgContent}
                         <button 
                           type="button" 
                           className="input-btn input-btn-plus" 
-                          onClick={() => handleNumberStep(setCols, cols, 1)}
+                          onMouseDown={() => handleRapidStepStart(setCols, 1)}
+                          onMouseUp={handleRapidStepStop}
+                          onMouseLeave={handleRapidStepStop}
                         >
                           <svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M8 4.57143H4.57143V8H3.42857V4.57143H0V3.42857H3.42857V0H4.57143V3.42857H8V4.57143Z" fill="#CDE0E6"/>
@@ -891,6 +961,10 @@ ${svgContent}
           <button className="button" id="btn-reset" onClick={() => {
             setItems([]);
             setSelectionStart(null);
+            setWidth(1920);
+            setHeight(1080);
+            setRows(12);
+            setCols(12);
           }}>
             <span className="button-text">Reset Grid</span>
           </button>

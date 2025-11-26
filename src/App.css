@@ -167,7 +167,7 @@ h1 {
   bottom: 2rem;
   right: 2rem;
   display: flex;
-  gap: 1rem;
+  gap: 0.5rem;
   padding: 1rem;
   z-index: 100;
   pointer-events: auto;
@@ -454,21 +454,20 @@ label {
 
 .grid-item .resize-handle {
   position: absolute;
-  bottom: 2px;
-  right: 2px;
-  width: 12px;
-  height: 12px;
+  bottom: 4px;
+  right: 4px;
+  width: 1.5rem;
+  height: 1.5rem;
   cursor: se-resize;
-  opacity: 0;
-}
-
-.grid-item:hover .resize-handle {
-  opacity: 1;
+  background-image: url("data:image/svg+xml,%3Csvg width='8' height='8' viewBox='0 0 8 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3.08594 3.08594L5.87883 0.293043C6.5088 -0.336922 7.58594 0.109246 7.58594 1.00015V3.58594C7.58594 5.79508 5.79508 7.58594 3.58594 7.58594H1.00015C0.109246 7.58594 -0.33692 6.5088 0.293044 5.87883L3.08594 3.08594Z' fill='%23333333'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  opacity: 0.2;
 }
 
 .grid-item .resize-handle:hover {
-  opacity: 1;
-  background: linear-gradient(135deg, transparent 50%, var(--colors--lime) 50%);
+  opacity: 0.7;
 }
 
 .safe-area-overlay {
