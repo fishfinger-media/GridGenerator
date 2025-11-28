@@ -439,6 +439,7 @@ label {
 
 .grid-item .remove-btn {
   position: absolute;
+  z-index: 10;
   top: 0.8rem;
   right: 0.8rem;
   background: rgba(0, 0, 0, 0.5);
