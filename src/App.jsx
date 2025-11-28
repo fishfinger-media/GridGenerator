@@ -1254,7 +1254,7 @@ ${svgContent}
                         checked={showPadding}
                         onChange={(e) => setShowPadding(e.target.checked)}
                       />
-                      Padding
+                      Outer Margin
                     </label>
                   </div>
                 </div>
