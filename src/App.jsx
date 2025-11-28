@@ -13,9 +13,11 @@ function App() {
   const [removeGap, setRemoveGap] = useState(false);
   const [showBorder, setShowBorder] = useState(false);
   const [showSafeArea, setShowSafeArea] = useState(false);
+  const [showPadding, setShowPadding] = useState(false);
   const [onlyCreatedCells, setOnlyCreatedCells] = useState(false);
 
   const [resizingId, setResizingId] = useState(null);
+  const [resizeCorner, setResizeCorner] = useState(null); // 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
   const [draggingId, setDraggingId] = useState(null);
   const [dragOffset, setDragOffset] = useState({ row: 0, col: 0 });
   const [dragPreview, setDragPreview] = useState(null);
@@ -130,6 +132,9 @@ function App() {
   // Calculate current scale
   const scale = calculateScale();
 
+  // Calculate padding (same as safe area inset)
+  const paddingInset = 15;
+  
   // Calculate gap and border radius based on shortest side of scaled grid dimensions
   const scaledHeight = height * scale;
   const scaledWidth = width * scale;
@@ -213,7 +218,7 @@ function App() {
   // Resize logic
   useEffect(() => {
     const handleMouseMove = (e) => {
-      if (!resizingId || !gridRef.current) return;
+      if (!resizingId || !resizeCorner || !gridRef.current) return;
 
       const gridRect = gridRef.current.getBoundingClientRect();
       const relativeX = e.clientX - gridRect.left;
@@ -225,19 +230,68 @@ function App() {
       const cellWidth = (totalWidth - (cols - 1) * gap) / cols;
       const cellHeight = (totalHeight - (rows - 1) * gap) / rows;
 
-      let newColEnd = Math.ceil(relativeX / (cellWidth + gap)) + 1;
-      let newRowEnd = Math.ceil(relativeY / (cellHeight + gap)) + 1;
-
-      // Clamp
-      if (newColEnd > cols + 1) newColEnd = cols + 1;
-      if (newRowEnd > rows + 1) newRowEnd = rows + 1;
-
       setItems(prevItems => prevItems.map(item => {
         if (item.id === resizingId) {
-          const constrainedColEnd = Math.max(item.colStart + 1, newColEnd);
-          const constrainedRowEnd = Math.max(item.rowStart + 1, newRowEnd);
+          let newItem = { ...item };
+          
+          switch (resizeCorner) {
+            case 'bottom-right': {
+              let newColEnd = Math.ceil(relativeX / (cellWidth + gap)) + 1;
+              let newRowEnd = Math.ceil(relativeY / (cellHeight + gap)) + 1;
+              // Clamp
+              if (newColEnd > cols + 1) newColEnd = cols + 1;
+              if (newRowEnd > rows + 1) newRowEnd = rows + 1;
+              newItem.colEnd = Math.max(item.colStart + 1, newColEnd);
+              newItem.rowEnd = Math.max(item.rowStart + 1, newRowEnd);
+              break;
+            }
+            case 'top-left': {
+              let newColStart = Math.floor(relativeX / (cellWidth + gap)) + 1;
+              let newRowStart = Math.floor(relativeY / (cellHeight + gap)) + 1;
+              // Clamp
+              if (newColStart < 1) newColStart = 1;
+              if (newRowStart < 1) newRowStart = 1;
+              newItem.colStart = Math.min(item.colEnd - 1, newColStart);
+              newItem.rowStart = Math.min(item.rowEnd - 1, newRowStart);
+              break;
+            }
+            case 'top-right': {
+              let newColEnd = Math.ceil(relativeX / (cellWidth + gap)) + 1;
+              let newRowStart = Math.floor(relativeY / (cellHeight + gap)) + 1;
+              // Clamp
+              if (newColEnd > cols + 1) newColEnd = cols + 1;
+              if (newRowStart < 1) newRowStart = 1;
+              newItem.colEnd = Math.max(item.colStart + 1, newColEnd);
+              newItem.rowStart = Math.min(item.rowEnd - 1, newRowStart);
+              break;
+            }
+            case 'bottom-left': {
+              let newColStart = Math.floor(relativeX / (cellWidth + gap)) + 1;
+              let newRowEnd = Math.ceil(relativeY / (cellHeight + gap)) + 1;
+              // Clamp
+              if (newColStart < 1) newColStart = 1;
+              if (newRowEnd > rows + 1) newRowEnd = rows + 1;
+              newItem.colStart = Math.min(item.colEnd - 1, newColStart);
+              newItem.rowEnd = Math.max(item.rowStart + 1, newRowEnd);
+              break;
+            }
+          }
 
-          const newItem = { ...item, colEnd: constrainedColEnd, rowEnd: constrainedRowEnd };
+          // Ensure minimum size of 1 cell
+          if (newItem.colEnd <= newItem.colStart) {
+            if (resizeCorner === 'top-left' || resizeCorner === 'bottom-left') {
+              newItem.colStart = newItem.colEnd - 1;
+            } else {
+              newItem.colEnd = newItem.colStart + 1;
+            }
+          }
+          if (newItem.rowEnd <= newItem.rowStart) {
+            if (resizeCorner === 'top-left' || resizeCorner === 'top-right') {
+              newItem.rowStart = newItem.rowEnd - 1;
+            } else {
+              newItem.rowEnd = newItem.rowStart + 1;
+            }
+          }
 
           // Check collision excluding itself
           if (!checkCollision(newItem, [item.id])) {
@@ -252,6 +306,7 @@ function App() {
 
     const handleMouseUp = () => {
       setResizingId(null);
+      setResizeCorner(null);
     };
 
     if (resizingId) {
@@ -263,12 +318,13 @@ function App() {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [resizingId, cols, rows, gap, items]);
+  }, [resizingId, resizeCorner, cols, rows, gap, items]);
 
-  const handleResizeStart = (e, id) => {
+  const handleResizeStart = (e, id, corner) => {
     e.stopPropagation();
     e.preventDefault();
     setResizingId(id);
+    setResizeCorner(corner);
   };
 
   // Drag-to-create logic
@@ -573,14 +629,19 @@ function App() {
     const svgWidth = width;
     const svgHeight = height;
     
+    // Calculate padding for SVG (same as safe area inset)
+    const svgPadding = showPadding ? paddingInset : 0;
+    
     // Calculate gap for SVG (based on actual grid dimensions, not scaled)
     const svgGap = calculateGap(svgHeight, svgWidth);
     
-    // Calculate cell dimensions
+    // Calculate cell dimensions (accounting for padding)
+    const availableWidth = svgWidth - (svgPadding * 2);
+    const availableHeight = svgHeight - (svgPadding * 2);
     const totalGapWidth = (cols - 1) * svgGap;
     const totalGapHeight = (rows - 1) * svgGap;
-    const cellWidth = (svgWidth - totalGapWidth) / cols;
-    const cellHeight = (svgHeight - totalGapHeight) / rows;
+    const cellWidth = (availableWidth - totalGapWidth) / cols;
+    const cellHeight = (availableHeight - totalGapHeight) / rows;
     
     // Create a set to track which cells are filled
     const filledCells = new Set();
@@ -606,8 +667,8 @@ function App() {
         for (let c = 1; c <= cols; c++) {
           const cellKey = `${r}-${c}`;
           if (!filledCells.has(cellKey)) {
-            const x = (c - 1) * (cellWidth + svgGap);
-            const y = (r - 1) * (cellHeight + svgGap);
+            const x = svgPadding + (c - 1) * (cellWidth + svgGap);
+            const y = svgPadding + (r - 1) * (cellHeight + svgGap);
             rectangles.push(
               `<rect x="${x}" y="${y}" width="${cellWidth}" height="${cellHeight}" rx="${svgBorderRadius}" ry="${svgBorderRadius}" fill="#d1ff00" ${borderAttr}/>`
             );
@@ -618,8 +679,8 @@ function App() {
     
     // Then, add filled cells (merged cells as single rectangles) - these will overlay empty cells
     items.forEach(item => {
-      const x = (item.colStart - 1) * (cellWidth + svgGap);
-      const y = (item.rowStart - 1) * (cellHeight + svgGap);
+      const x = svgPadding + (item.colStart - 1) * (cellWidth + svgGap);
+      const y = svgPadding + (item.rowStart - 1) * (cellHeight + svgGap);
       const rectWidth = (item.colEnd - item.colStart) * cellWidth + (item.colEnd - item.colStart - 1) * svgGap;
       const rectHeight = (item.rowEnd - item.rowStart) * cellHeight + (item.rowEnd - item.rowStart - 1) * svgGap;
       
@@ -634,8 +695,8 @@ function App() {
       
       // For merged items, draw safe area only at top-left
       items.forEach(item => {
-        const x = (item.colStart - 1) * (cellWidth + svgGap);
-        const y = (item.rowStart - 1) * (cellHeight + svgGap);
+        const x = svgPadding + (item.colStart - 1) * (cellWidth + svgGap);
+        const y = svgPadding + (item.rowStart - 1) * (cellHeight + svgGap);
         const rectWidth = (item.colEnd - item.colStart) * cellWidth + (item.colEnd - item.colStart - 1) * svgGap;
         const rectHeight = (item.rowEnd - item.rowStart) * cellHeight + (item.rowEnd - item.rowStart - 1) * svgGap;
         
@@ -657,8 +718,8 @@ function App() {
           for (let c = 1; c <= cols; c++) {
             const cellKey = `${r}-${c}`;
             if (!filledCells.has(cellKey)) {
-              const x = (c - 1) * (cellWidth + svgGap);
-              const y = (r - 1) * (cellHeight + svgGap);
+              const x = svgPadding + (c - 1) * (cellWidth + svgGap);
+              const y = svgPadding + (r - 1) * (cellHeight + svgGap);
               
               const safeAreaX = x + safeAreaInset;
               const safeAreaY = y + safeAreaInset;
@@ -1186,6 +1247,15 @@ ${svgContent}
                       />
                       Safe Area
                     </label>
+                    <label>
+                      <input 
+                        type="checkbox" 
+                        name="option-padding"
+                        checked={showPadding}
+                        onChange={(e) => setShowPadding(e.target.checked)}
+                      />
+                      Padding
+                    </label>
                   </div>
                 </div>
               </div>
@@ -1203,8 +1273,8 @@ ${svgContent}
             gridTemplateRows: `repeat(${rows}, 1fr)`,
             columnGap: `${gap}px`,
             rowGap: `${gap}px`,
-            width: `${width * scale}px`,
-            height: `${height * scale}px`,
+            width: `${scaledWidth}px`,
+            height: `${scaledHeight}px`,
             maxWidth: '70%',
             maxHeight: '100%',
             position: 'relative',
@@ -1215,66 +1285,107 @@ ${svgContent}
             }
           }}
         >
+          {showPadding && (
+            <div
+              style={{
+                position: 'absolute',
+                top: `-${paddingInset}px`,
+                left: `-${paddingInset}px`,
+                right: `-${paddingInset}px`,
+                bottom: `-${paddingInset}px`,
+                border: '1px solid cyan',
+                pointerEvents: 'none',
+                zIndex: 100,
+              }}
+            />
+          )}
           {placeholders}
 
-          <AnimatePresence>
-            {previewItem}
-            {items.map((item) => {
-              // Use preview position if dragging, otherwise use actual position
-              const displayItem = draggingId === item.id && dragPreview ? dragPreview : item;
-              const isOverlappingDuringDrag = draggingId === item.id && dragPreview && dragPreview.hasCollision;
-              
-              // Use bouncy spring transition if recently dragged, otherwise use normal transition (same as resize)
-              const isRecentlyDragged = recentlyDraggedId === item.id;
-              const isActivelyDragging = draggingId === item.id;
-              const springTransition = isRecentlyDragged 
-                ? { type: "spring", stiffness: 400, damping: 20, mass: 0.8 }
-                : { type: "spring", stiffness: 700, damping: 35 };
-              
-              return (
-              <motion.div
-                layout
-                key={item.id}
-                className={`grid-item ${draggingId === item.id ? 'dragging' : ''} ${isOverlappingDuringDrag ? 'invalid' : ''}`}
-                initial={false}
-                animate={{ 
-                  opacity: 1, 
-                  scale: 1,
-                  borderColor: isOverlappingDuringDrag ? '#ff4444' : (showBorder ? '#0b0f14' : 'transparent'),
-                  backgroundColor: isOverlappingDuringDrag ? 'rgba(255, 68, 68, 0.2)' : 'var(--colors--lime)'
-                }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={springTransition}
-                style={{
-                  gridColumnStart: displayItem.colStart,
-                  gridColumnEnd: displayItem.colEnd,
-                  gridRowStart: displayItem.rowStart,
-                  gridRowEnd: displayItem.rowEnd,
-                  zIndex: (resizingId === item.id || draggingId === item.id) ? 20 : 10,
-                  borderRadius: `${borderRadius}px`,
-                  border: showBorder || isOverlappingDuringDrag ? '1px solid' : 'none',
-                  cursor: draggingId === item.id ? 'grabbing' : 'grab',
-                }}
-                onMouseDown={(e) => handleDragStart(e, item.id)}
-              >
-                <div
-                  className="remove-btn"
-                  onClick={(e) => handleRemoveItem(e, item.id)}
+            <AnimatePresence>
+              {previewItem}
+              {items.map((item) => {
+                // Use preview position if dragging, otherwise use actual position
+                const displayItem = draggingId === item.id && dragPreview ? dragPreview : item;
+                const isOverlappingDuringDrag = draggingId === item.id && dragPreview && dragPreview.hasCollision;
+                
+                // Use bouncy spring transition if recently dragged, otherwise use normal transition (same as resize)
+                const isRecentlyDragged = recentlyDraggedId === item.id;
+                const isActivelyDragging = draggingId === item.id;
+                const springTransition = isRecentlyDragged 
+                  ? { type: "spring", stiffness: 400, damping: 20, mass: 0.8 }
+                  : { type: "spring", stiffness: 700, damping: 35 };
+                
+                return (
+                <motion.div
+                  layout
+                  key={item.id}
+                  className={`grid-item ${draggingId === item.id ? 'dragging' : ''} ${isOverlappingDuringDrag ? 'invalid' : ''}`}
+                  initial={false}
+                  animate={{ 
+                    opacity: 1, 
+                    scale: 1,
+                    borderColor: isOverlappingDuringDrag ? '#ff4444' : (showBorder ? '#0b0f14' : 'transparent'),
+                    backgroundColor: isOverlappingDuringDrag ? 'rgba(255, 68, 68, 0.2)' : 'var(--colors--lime)'
+                  }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={springTransition}
+                  style={{
+                    gridColumnStart: displayItem.colStart,
+                    gridColumnEnd: displayItem.colEnd,
+                    gridRowStart: displayItem.rowStart,
+                    gridRowEnd: displayItem.rowEnd,
+                    zIndex: (resizingId === item.id || draggingId === item.id) ? 20 : 10,
+                    borderRadius: `${borderRadius}px`,
+                    border: showBorder || isOverlappingDuringDrag ? '1px solid' : 'none',
+                    cursor: draggingId === item.id ? 'grabbing' : 'grab',
+                  }}
+                  onMouseDown={(e) => handleDragStart(e, item.id)}
                 >
-                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg width="10" height="10" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M15.4141 1.41406L9.12109 7.70703L15.4141 14L14 15.4141L7.70703 9.12109L1.41406 15.4141L0 14L6.29297 7.70703L0 1.41406L1.41406 0L7.70703 6.29297L14 0L15.4141 1.41406Z" fill="white"/>
-                  </svg>
-                  </span>
+                  <div
+                    className="remove-btn"
+                    onClick={(e) => handleRemoveItem(e, item.id)}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="10" height="10" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M15.4141 1.41406L9.12109 7.70703L15.4141 14L14 15.4141L7.70703 9.12109L1.41406 15.4141L0 14L6.29297 7.70703L0 1.41406L1.41406 0L7.70703 6.29297L14 0L15.4141 1.41406Z" fill="white"/>
+                    </svg>
+                    </span>
 
-                </div>
-                <div
-                  className="resize-handle"
-                  onMouseDown={(e) => handleResizeStart(e, item.id)}
-                />
-              </motion.div>
-              );
-            })}
+                  </div>
+                  <div
+                    className="resize-handle"
+                    onMouseDown={(e) => handleResizeStart(e, item.id, 'bottom-right')}
+                  />
+                  <div
+                    className="resize-handle resize-handle-invisible"
+                    style={{
+                      top: '4px',
+                      left: '4px',
+                      cursor: 'nw-resize',
+                    }}
+                    onMouseDown={(e) => handleResizeStart(e, item.id, 'top-left')}
+                  />
+                  <div
+                    className="resize-handle resize-handle-invisible"
+                    style={{
+                      top: '4px',
+                      right: '4px',
+                      cursor: 'ne-resize',
+                    }}
+                    onMouseDown={(e) => handleResizeStart(e, item.id, 'top-right')}
+                  />
+                  <div
+                    className="resize-handle resize-handle-invisible"
+                    style={{
+                      bottom: '4px',
+                      left: '4px',
+                      cursor: 'sw-resize',
+                    }}
+                    onMouseDown={(e) => handleResizeStart(e, item.id, 'bottom-left')}
+                  />
+                </motion.div>
+                );
+              })}
           </AnimatePresence>
           {showSafeArea && generateSafeAreaOverlays()}
         </div>

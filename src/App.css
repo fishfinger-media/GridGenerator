@@ -481,6 +481,15 @@ label {
   opacity: 0.7;
 }
 
+.grid-item .resize-handle-invisible {
+  background-image: none;
+  opacity: 0;
+}
+
+.grid-item .resize-handle-invisible:hover {
+  opacity: 0;
+}
+
 .safe-area-overlay {
   pointer-events: none;
 }
