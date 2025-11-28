@@ -90,6 +90,7 @@ html {
 .logo-w {
   max-height: 2rem;
   display: flex;
+  min-width: 5rem;
 }
 
 h1 {
